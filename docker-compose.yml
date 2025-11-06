@@ -1,0 +1,83 @@
+version: "3.9"
+
+services:
+  data_collector:
+    build: ./data_collector
+    image: industria-collector:latest
+    container_name: data_collector
+    environment:
+      - OUTPUT_PATH=/data/dataset.csv
+      - INTERVAL_SEC=1
+      - SEED=42
+      - BATCH_STARTUP_ROWS=200
+    volumes:
+      - data_volume:/data
+    networks: [backend_net]
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+  model_service:
+    build: ./model_service
+    image: industria-model:latest
+    container_name: model_service
+    environment:
+      - DATA_PATH=/data/dataset.csv
+      - MODEL_PATH=/model/model.pkl
+      - MIN_ROWS=100
+    volumes:
+      - data_volume:/data:ro
+      - model_volume:/model
+    networks: [backend_net]
+    depends_on:
+      - data_collector
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8001/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    security_opt:
+      - no-new-privileges:true
+
+  api_service:
+    build: ./api_service
+    image: industria-api:latest
+    container_name: api_service
+    environment:
+      - DATA_PATH=/data/dataset.csv
+      - MODEL_URL=http://model_service:8001/predict
+    volumes:
+      - data_volume:/data:ro
+    networks: [backend_net]
+    depends_on:
+      model_service:
+        condition: service_healthy
+    restart: unless-stopped
+#    healthcheck:
+#      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8000/api/health"]
+#      interval: 10s
+#      timeout: 3s
+#      retries: 5
+    security_opt:
+      - no-new-privileges:true
+
+  frontend:
+    build: ./frontend
+    image: industria-frontend:latest
+    container_name: frontend
+    ports:
+      - "8080:80"
+    networks: [backend_net]
+    depends_on:
+      api_service:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  backend_net:
+    driver: bridge
+
+volumes:
+  data_volume:
+  model_volume:

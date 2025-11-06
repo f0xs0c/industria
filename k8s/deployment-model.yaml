@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: model-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: model }
+  template:
+    metadata:
+      labels: { app: model }
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+      - name: model
+        image: industria-model:latest
+        ports:
+        - containerPort: 8001
+        env:
+        - name: DATA_PATH
+          value: /data/dataset.csv
+        - name: MODEL_PATH
+          value: /model/model.pkl
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        - name: model
+          mountPath: /model
+        readinessProbe:
+          httpGet: { path: /healthz, port: 8001 }
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        livenessProbe:
+          httpGet: { path: /healthz, port: 8001 }
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        resources:
+          requests: { cpu: "100m", memory: "256Mi" }
+          limits: { cpu: "500m", memory: "512Mi" }
+      volumes:
+      - name: data
+        persistentVolumeClaim: { claimName: data-pvc }
+      - name: model
+        emptyDir: {}

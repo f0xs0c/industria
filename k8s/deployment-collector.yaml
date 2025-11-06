@@ -1,0 +1,33 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: collector-deploy
+  namespace: industria
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: collector }
+  template:
+    metadata:
+      labels: { app: collector }
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+      - name: collector
+        image: industria-collector:latest
+        env:
+        - { name: OUTPUT_PATH, value: /data/dataset.csv }
+        - { name: INTERVAL_SEC, value: "1" }
+        - { name: SEED, value: "42" }
+        - { name: BATCH_STARTUP_ROWS, value: "200" }
+        volumeMounts:
+        - { name: data, mountPath: /data }
+        resources:
+          requests: { cpu: "50m", memory: "64Mi" }
+          limits:   { cpu: "200m", memory: "128Mi" }
+      volumes:
+      - name: data
+        persistentVolumeClaim: { claimName: data-pvc }
+

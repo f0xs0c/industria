@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-deploy
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: api }
+  template:
+    metadata:
+      labels: { app: api }
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+      - name: api
+        image: industria-api:latest
+        ports:
+        - containerPort: 8000
+        env:
+        - name: DATA_PATH
+          value: /data/dataset.csv
+        - name: MODEL_URL
+          value: http://model-svc:8001/predict
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        readinessProbe:
+          httpGet: { path: /healthz, port: 8000 }
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        livenessProbe:
+          httpGet: { path: /healthz, port: 8000 }
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        resources:
+          requests: { cpu: "100m", memory: "256Mi" }
+          limits: { cpu: "500m", memory: "512Mi" }
+      volumes:
+      - name: data
+        persistentVolumeClaim: { claimName: data-pvc }

@@ -1,0 +1,5 @@
+
+# Ignore local binaries
+minikube-linux-amd64
+minikube*
+
