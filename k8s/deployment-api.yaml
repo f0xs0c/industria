@@ -15,7 +15,7 @@ spec:
         runAsUser: 1000
       containers:
       - name: api
-        image: industria-api:latest
+        image: 7mnm/industria-api:latest
         ports:
         - containerPort: 8000
         env:

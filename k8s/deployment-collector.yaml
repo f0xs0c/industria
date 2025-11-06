@@ -16,7 +16,7 @@ spec:
         runAsUser: 1000
       containers:
       - name: collector
-        image: industria-collector:latest
+        image: 7mnm/industria-collector:latest
         env:
         - { name: OUTPUT_PATH, value: /data/dataset.csv }
         - { name: INTERVAL_SEC, value: "1" }
