@@ -193,8 +193,8 @@ podman-compose down
 ---
 
 # 🧠 Authors & Credits
-**Robin Lautier**  
+f0xs0c & 7mnm & Adil-pro-simple
 Cybersecurity & Data Engineering Student  
 Docker Hub: [7mnm](https://hub.docker.com/u/7mnm)
 
-License: **MIT**
+
